@@ -1,0 +1,84 @@
+<html ng-app="friends_app">
+<head>
+  <title>Full Mean Demo</title>
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular.min.js"></script>
+  <script> 
+
+      var friends_app = angular.module('friends_app', []);
+
+      friends_app.factory('FriendFactory', function($http) {
+        var factory = {};
+        var friends = [];
+
+
+        factory.getfriend = function(callback) {
+            $http.get('/friends').success(function(data) {
+            friends = data;
+            callback(friends);
+          }) 
+        }
+
+        factory.addfriend = function(info, callback) {
+            $http.post('/friends', info).success(function(info){
+            friends.push(info);
+            callback(friends);
+          })
+
+        }
+
+        factory.deleteFriend = function(info, callback){
+          console.log(info);
+          $http.post('/friends/' + info._id  + '/delete').then(function(info){
+            console.log(info);
+            friends.splice(friends.indexOf(info), 1);
+            callback(friends);
+          })
+        }
+        return factory;
+      });
+
+      friends_app.controller('FriendsController', function($scope, FriendFactory) {
+
+        $scope.friends = [];
+
+        FriendFactory.getfriend(function(data) {
+          $scope.friends = data;
+        });
+
+        $scope.addfriend = function(new_friend) {
+            FriendFactory.addfriend(new_friend, function(data) {
+            $scope.friends = data;
+            $scope.new_friend = {};
+          });
+        }
+
+        $scope.deleteFriend = function(friend){
+          console.log(friend);
+          FriendFactory.deleteFriend(friend, function(data){
+            $scope.friends = data;
+          })
+        }
+
+      })
+
+  </script>
+</head>
+
+<body ng-controller="FriendsController">
+
+    <h1>Friends</h1>
+    <input type="text" ng-model="filter_name" placeholder="filter">
+    {{filter_name}}
+    <ul>
+      <li ng-repeat="friend in friends | filter: filter_name">
+          {{friend.name}}, {{friend.age}}, <input type="submit" ng-click="deleteFriend(friend)" value="delete">
+      </li>
+    
+    </ul>
+    <h1>Add a Friend</h1>
+
+    <input type="text" ng-model="new_friend.name" placeholder="name">
+    <input type="text" ng-model="new_friend.age" placeholder="age">
+    <input type="submit" ng-click="addfriend(new_friend)">
+</body>
+</html>
